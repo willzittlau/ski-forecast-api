@@ -5,7 +5,7 @@ from flask_httpauth import HTTPBasicAuth
 import json
 # root files
 from config import ProdConfig, DevConfig
-from env import *
+#from env import *
 
 # Initialize app
 api = Flask(__name__)
