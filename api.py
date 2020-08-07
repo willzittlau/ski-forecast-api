@@ -171,6 +171,8 @@ def delete_area(name):
         if bool(Areas.query.filter_by(name=delete["name"]).first()) == True:
             db.session.delete(Areas.query.filter_by(name=delete["name"]).first())
             db.session.commit()
+        else:
+            abort (404)
     else:
         abort (400)
     return jsonify( delete )
