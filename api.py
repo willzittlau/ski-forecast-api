@@ -26,7 +26,7 @@ def get_password(username):
         return userpass() #os.environ['API_KEY']
     return None
 
-# Error to JSON
+# JSONify error codes
 @auth.error_handler
 def unauthorized():
     return make_response(jsonify({'error': 'Unauthorized access'}), 401)
@@ -79,7 +79,7 @@ def get_area(name):
     else:
         abort (404)
 
-# Create area
+# POST (create) area
 @api.route('/api/v1/areas', methods = ['POST'])
 @auth.login_required
 def create_area():
@@ -101,7 +101,7 @@ def create_area():
             avalanche_forecast = post["avalanche_forecast"]
             coordinates = post["coordinates"]
             model_elevation = post["model_elevation"]
-            # Make sure name entry doesn't exit already
+            # Make sure name entry doesn't exist already
             if bool(Areas.query.filter_by(name=name).first()) == True:
                 abort (400)
             # Add unique completed entry to dB
@@ -116,19 +116,57 @@ def create_area():
 # PUT (create / modify) specific area
 @api.route('/api/v1/areas/<name>', methods = ['PUT'])
 @auth.login_required
-def update_area(task_id):
-    put = request.get_json()
-    convert_to_dict(put)
-    return jsonify( { 'task': make_public_task(task[0]) } )
+def modify_area(name):
+    # Check post datatype
+    if not request.get_json():
+        abort(400)
+    else:
+        post = request.get_json()
+        # Check keys are correct
+        if "name" and "area_type" and "avalanche_forecast" and "coordinates" and "model_elevation" in post:
+            values = post.values()
+            # Check key-value pairs aren't empty
+            for val in values:
+                if val == '':
+                    abort(400)
+            # Convert to dB strings
+            name = post["name"]
+            area_type = post["area_type"]
+            avalanche_forecast = post["avalanche_forecast"]
+            coordinates = post["coordinates"]
+            model_elevation = post["model_elevation"]
+            # Check if name entry exists
+            if bool(Areas.query.filter_by(name=name).first()) == True:
+                # Modify selected area
+                area = Areas.query.filter_by(name=name).first()
+                area.name = name
+                area.coordinates = coordinates
+                area.avalanche_forecast = avalanche_forecast
+                area.area_type = area_type
+                area.model_elevation = model_elevation
+                # Submit changes to dB
+                db.session.commit()
+            # Add entry to dB if it doesn't already exist
+            else:
+                data = Areas(name, coordinates, avalanche_forecast, area_type, model_elevation)
+                db.session.add(data)
+                db.session.commit()
+                return jsonify( post ), 201
+        else:
+            abort(400)
+    return jsonify( post )
 
 # DELETE specific area
 @api.route('/api/v1/areas/<name>', methods = ['DELETE'])
 @auth.login_required
+# Check delete datatype
 def delete_area(name):
     if not request.get_json():
         abort(400)
+    # Check that contents of delete request match the url route
     delete = request.get_json()
     if delete["name"] == str(name):
+        # Check that delete request name exists in dB and execute request
         if bool(Areas.query.filter_by(name=delete["name"]).first()) == True:
             db.session.delete(Areas.query.filter_by(name=delete["name"]).first())
             db.session.commit()
