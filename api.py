@@ -36,6 +36,9 @@ def not_found(error):
 @api.errorhandler(404)
 def not_found(error):
     return make_response(jsonify( { 'error': 'Not found' } ), 404)
+@api.errorhandler(405)
+def not_found(error):
+    return make_response(jsonify( { 'error': 'Method not allowed' } ), 405)
 
 # Routes
 @api.route('/', methods = ['GET'])
@@ -43,6 +46,7 @@ def not_found(error):
 def index(): # Redirect to proper API URL path
     return redirect(url_for('get_areas'))
 
+# GET all areas
 @api.route('/api/v1/areas', methods = ['GET'])
 @auth.login_required
 def get_areas():
@@ -56,6 +60,7 @@ def get_areas():
         get.append(area_dict)
     return jsonify( get )
 
+# GET specific area
 @api.route('/api/v1/areas/<name>', methods = ['GET'])
 @auth.login_required
 def get_area(name):
@@ -74,6 +79,7 @@ def get_area(name):
     else:
         abort (404)
 
+# Create area
 @api.route('/api/v1/areas', methods = ['POST'])
 @auth.login_required
 def create_area():
@@ -107,6 +113,7 @@ def create_area():
             abort(400)
     return jsonify( post ), 201
 
+# PUT (create / modify) specific area
 @api.route('/api/v1/areas/<name>', methods = ['PUT'])
 @auth.login_required
 def update_area(task_id):
@@ -114,14 +121,21 @@ def update_area(task_id):
     convert_to_dict(put)
     return jsonify( { 'task': make_public_task(task[0]) } )
 
+# DELETE specific area
 @api.route('/api/v1/areas/<name>', methods = ['DELETE'])
 @auth.login_required
-def delete_area(task_id):
+def delete_area(name):
+    if not request.get_json():
+        abort(400)
     delete = request.get_json()
-    convert_to_dict(put)
-    db.session.delete(area)
-    db.session.commit()
-    return jsonify( { 'result': True } )
+    if delete["name"] == str(name):
+        if bool(Areas.query.filter_by(name=delete["name"]).first()) == True:
+            db.session.delete(Areas.query.filter_by(name=delete["name"]).first())
+            db.session.commit()
+    else:
+        abort (400)
+    return jsonify( delete )
 
+# Run app
 if __name__ == '__main__':
     api.run()
