@@ -1,5 +1,5 @@
 import os
-from env import *
+# from env import *
 
 class Config(object):
     DEBUG = False
@@ -7,9 +7,8 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 class ProdConfig(Config):
-    #SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
-    ''
+    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
 
 class DevConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = sqlpath()
+    # SQLALCHEMY_DATABASE_URI = sqlpath()

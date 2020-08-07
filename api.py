@@ -11,8 +11,8 @@ from env import *
 api = Flask(__name__)
 
 # Configuration
-api.config.from_object(DevConfig())
-#app.config.from_object(ProdConfig())
+#api.config.from_object(DevConfig())
+api.config.from_object(ProdConfig())
 
 # Initialize dB
 db = SQLAlchemy(api)
@@ -22,8 +22,8 @@ from models import *
 auth = HTTPBasicAuth()
 @auth.get_password
 def get_password(username):
-    if username == userpass(): #os.environ['API_User']
-        return userpass() #os.environ['API_KEY']
+    if username == os.environ['API_User']: #userpass()
+        return os.environ['API_KEY'] #userpass()
     return None
 
 # JSONify error codes
