@@ -45,7 +45,13 @@ def not_found(error):
 @api.route('/', methods = ['GET'])
 @auth.login_required
 def index(): # Redirect to proper API URL path
-    return redirect(url_for('get_areas'))
+    template = {"area_type":"\'backcountry\' or \'resort\'", 
+                "avalanche_forecast": "values from https://www.avalanche.ca/api/bulletin-archive/2020/regions.json", 
+                "coordinates":"format = \'lat=49.63297&lon=-123.08596\' (from spotWX)", 
+                "model_elevation":"1249m (model elevation from SpotWX)", 
+                "name":"sky-pilot (Area name to be displayed)"
+                }
+    return jsonify ( template )
 
 # GET all areas
 @api.route('/api/v1/areas', methods = ['GET'])
