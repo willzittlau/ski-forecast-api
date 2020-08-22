@@ -48,7 +48,9 @@ def index(): # Redirect to proper API URL path
     template = {"area_type":"\'backcountry\' or \'resort\'", 
                 "avalanche_forecast": "values from https://www.avalanche.ca/api/bulletin-archive/2020/regions.json", 
                 "coordinates":"format = \'lat=49.63297&lon=-123.08596\' (from spotWX)", 
-                "model_elevation":"1249m (model elevation from SpotWX)", 
+                "NAM_elevation":"1149m (NAM elevation from SpotWX)", 
+                "HRDPS_elevation":"1249m (HRDPS elevation from SpotWX)",
+                "tz_info":"America/Vancouver (tz from SpotWX)",
                 "name":"sky-pilot (Area name to be displayed)"
                 }
     return jsonify ( template )
@@ -96,7 +98,7 @@ def create_area():
     else:
         post = request.get_json()
         # Check keys are correct
-        if "name" and "area_type" and "avalanche_forecast" and "coordinates" and "model_elevation" in post:
+        if "name" and "area_type" and "avalanche_forecast" and "coordinates" and "tz_info" and "NAM_elevation" and "HRDPS_elevation" in post:
             values = post.values()
             # Check key-value pairs aren't empty
             for val in values:
@@ -104,16 +106,18 @@ def create_area():
                     abort(400)
             # Convert to dB strings
             name = post["name"]
-            area_type = post["area_type"]
-            avalanche_forecast = post["avalanche_forecast"]
             coordinates = post["coordinates"]
-            model_elevation = post["model_elevation"]
+            avalanche_forecast = post["avalanche_forecast"]
+            area_type = post["area_type"]
+            tz_info = post["tz_info"]
+            NAM_elevation = post["NAM_elevation"]
+            HRDPS_elevation = post["HRDPS_elevation"]
             # Make sure name entry doesn't exist already
             if bool(Areas.query.filter_by(name=name).first()) == True:
                 abort (400)
             # Add unique completed entry to dB
             else:
-                data = Areas(name, coordinates, avalanche_forecast, area_type, model_elevation)
+                data = Areas(name, coordinates, avalanche_forecast, area_type, tz_info, NAM_elevation, HRDPS_elevation)
                 db.session.add(data)
                 db.session.commit()
         else:
@@ -128,20 +132,22 @@ def modify_area(name):
     if not request.get_json():
         abort(400)
     else:
-        post = request.get_json()
+        put = request.get_json()
         # Check keys are correct
-        if "name" and "area_type" and "avalanche_forecast" and "coordinates" and "model_elevation" in post:
-            values = post.values()
+        if "name" and "area_type" and "avalanche_forecast" and "coordinates" and "tz_info" and "NAM_elevation" and "HRDPS_elevation" in put:
+            values = put.values()
             # Check key-value pairs aren't empty
             for val in values:
                 if val == '':
                     abort(400)
             # Convert to dB strings
-            name = post["name"]
-            area_type = post["area_type"]
-            avalanche_forecast = post["avalanche_forecast"]
-            coordinates = post["coordinates"]
-            model_elevation = post["model_elevation"]
+            name = put["name"]
+            coordinates = put["coordinates"]
+            avalanche_forecast = put["avalanche_forecast"]
+            area_type = put["area_type"]
+            tz_info = put["tz_info"]
+            NAM_elevation = put["NAM_elevation"]
+            HRDPS_elevation = put["HRDPS_elevation"]
             # Check if name entry exists
             if bool(Areas.query.filter_by(name=name).first()) == True:
                 # Modify selected area
@@ -150,18 +156,20 @@ def modify_area(name):
                 area.coordinates = coordinates
                 area.avalanche_forecast = avalanche_forecast
                 area.area_type = area_type
-                area.model_elevation = model_elevation
+                area.tz_info = tz_info
+                area.NAM_elevation = NAM_elevation
+                area.HRDPS_elevation = HRDPS_elevation
                 # Submit changes to dB
                 db.session.commit()
             # Add entry to dB if it doesn't already exist
             else:
-                data = Areas(name, coordinates, avalanche_forecast, area_type, model_elevation)
+                data = Areas(name, coordinates, avalanche_forecast, area_type, tz_info, NAM_elevation, HRDPS_elevation)
                 db.session.add(data)
                 db.session.commit()
-                return jsonify( post ), 201
+                return jsonify( put ), 201
         else:
             abort(400)
-    return jsonify( post )
+    return jsonify( put )
 
 # DELETE specific area
 @api.route('/api/v1/areas/<name>', methods = ['DELETE'])
